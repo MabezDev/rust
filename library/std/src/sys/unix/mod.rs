@@ -13,6 +13,8 @@ pub use crate::os::dragonfly as platform;
 pub use crate::os::emscripten as platform;
 #[cfg(all(not(doc), target_os = "freebsd"))]
 pub use crate::os::freebsd as platform;
+#[cfg(all(not(doc), target_os = "freertos"))]
+pub use crate::os::freertos as platform;
 #[cfg(all(not(doc), target_os = "fuchsia"))]
 pub use crate::os::fuchsia as platform;
 #[cfg(all(not(doc), target_os = "haiku"))]
@@ -37,6 +39,7 @@ pub use crate::os::solaris as platform;
 pub use self::rand::hashmap_random_keys;
 pub use libc::strlen;
 
+#[cfg(not(target_os = "freertos"))]
 #[macro_use]
 pub mod weak;
 
@@ -44,6 +47,7 @@ pub mod alloc;
 pub mod android;
 pub mod args;
 pub mod cmath;
+#[cfg_attr(target_os = "freertos", path = "freertos/condvar.rs")]
 pub mod condvar;
 pub mod env;
 pub mod ext;
@@ -56,23 +60,35 @@ pub mod kernel_copy;
 #[cfg(target_os = "l4re")]
 mod l4re;
 pub mod memchr;
+#[cfg_attr(target_os = "freertos", path = "freertos/mutex.rs")]
 pub mod mutex;
 #[cfg(not(target_os = "l4re"))]
 pub mod net;
 #[cfg(target_os = "l4re")]
 pub use self::l4re::net;
+pub mod net_fd;
 pub mod os;
 pub mod path;
+#[cfg_attr(target_os = "freertos", path = "../unsupported/pipe.rs")]
 pub mod pipe;
+#[cfg_attr(target_os = "freertos", path = "../unsupported/process.rs")]
 pub mod process;
 pub mod rand;
+#[cfg_attr(target_os = "freertos", path = "../wasm/rwlock_atomics.rs")]
 pub mod rwlock;
 pub mod stack_overflow;
 pub mod stdio;
+#[cfg_attr(target_os = "freertos", path = "freertos/thread.rs")]
 pub mod thread;
+#[cfg_attr(target_os = "freertos", path = "freertos/thread_local_dtor.rs")]
 pub mod thread_local_dtor;
+#[cfg_attr(target_os = "freertos", path = "freertos/thread_local_key.rs")]
 pub mod thread_local_key;
 pub mod time;
+
+#[cfg(target_os = "freertos")]
+#[path = "freertos/ffi.rs"]
+pub mod ffi;
 
 pub use crate::sys_common::os_str_bytes as os_str;
 
@@ -97,8 +113,8 @@ pub fn init() {
     }
 
     cfg_if::cfg_if! {
-        if #[cfg(miri)] {
-            // The standard fds are always available in Miri.
+        if #[cfg(any(target_os = "miri", target_os = "freertos"))] {
+            // The standard fds are always available in Miri and FreeRTOS.
             unsafe fn sanitize_standard_fds() {}
         } else if #[cfg(not(any(
             target_os = "emscripten",
@@ -152,12 +168,23 @@ pub fn init() {
         }
     }
 
-    #[cfg(not(any(target_os = "emscripten", target_os = "fuchsia")))]
+    #[cfg(not(any(target_os = "emscripten", target_os = "fuchsia", target_os = "freertos")))]
     unsafe fn reset_sigpipe() {
         assert!(signal(libc::SIGPIPE, libc::SIG_IGN) != libc::SIG_ERR);
     }
-    #[cfg(any(target_os = "emscripten", target_os = "fuchsia"))]
+    #[cfg(any(target_os = "emscripten", target_os = "fuchsia", target_os = "freertos"))]
     unsafe fn reset_sigpipe() {}
+}
+
+/// This function is used to implement functionality that simply doesn't exist.
+/// Programs relying on this functionality will need to deal with the error.
+#[allow(unused)]
+pub fn unsupported<T>() -> crate::io::Result<T> {
+    Err(unsupported_err())
+}
+
+pub fn unsupported_err() -> crate::io::Error {
+    crate::io::Error::new(ErrorKind::Other, "operation not supported")
 }
 
 #[cfg(target_os = "android")]
@@ -189,6 +216,11 @@ pub fn decode_error_kind(errno: i32) -> ErrorKind {
         _ => ErrorKind::Other,
     }
 }
+
+// This enum is used as the storage for a bunch of types which can't actually
+// exist.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+pub enum Void {}
 
 #[doc(hidden)]
 pub trait IsMinusOne {
@@ -222,6 +254,7 @@ where
     }
 }
 
+#[cfg(not(target_os = "freertos"))]
 pub fn cvt_nz(error: libc::c_int) -> crate::io::Result<()> {
     if error == 0 { Ok(()) } else { Err(crate::io::Error::from_raw_os_error(error)) }
 }

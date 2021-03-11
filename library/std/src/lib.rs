@@ -275,6 +275,7 @@
 #![feature(into_future)]
 #![feature(lang_items)]
 #![feature(link_args)]
+#![feature(linked_list_remove)]
 #![feature(linkage)]
 #![feature(llvm_asm)]
 #![feature(log_syntax)]

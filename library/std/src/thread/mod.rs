@@ -460,8 +460,11 @@ impl Builder {
         crate::io::set_output_capture(output_capture.clone());
 
         let main = move || {
-            if let Some(name) = their_thread.cname() {
-                imp::Thread::set_name(name);
+            #[cfg(not(target_os = "freertos"))]
+            {
+                if let Some(name) = their_thread.cname() {
+                    imp::Thread::set_name(name);
+                }
             }
 
             crate::io::set_output_capture(output_capture);
@@ -496,6 +499,8 @@ impl Builder {
             // returning.
             native: unsafe {
                 Some(imp::Thread::new(
+                    #[cfg(target_os = "freertos")]
+                    my_thread.cname(),
                     stack_size,
                     mem::transmute::<Box<dyn FnOnce() + 'a>, Box<dyn FnOnce() + 'static>>(
                         Box::new(main),

@@ -61,6 +61,7 @@ impl DoubleEndedIterator for Args {
     target_os = "linux",
     target_os = "android",
     target_os = "freebsd",
+    target_os = "freertos",
     target_os = "dragonfly",
     target_os = "netbsd",
     target_os = "openbsd",

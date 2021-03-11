@@ -48,6 +48,8 @@ pub mod emscripten;
 pub mod fortanix_sgx;
 #[cfg(target_os = "freebsd")]
 pub mod freebsd;
+#[cfg(target_os = "freertos")]
+pub mod freertos;
 #[cfg(target_os = "fuchsia")]
 pub mod fuchsia;
 #[cfg(target_os = "haiku")]

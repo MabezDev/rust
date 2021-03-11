@@ -63,6 +63,9 @@ pub const unwinder_private_data_size: usize = 20;
 #[cfg(all(target_arch = "hexagon", target_os = "linux"))]
 pub const unwinder_private_data_size: usize = 35;
 
+#[cfg(target_arch = "xtensa")]
+pub const unwinder_private_data_size: usize = 2;
+
 #[repr(C)]
 pub struct _Unwind_Exception {
     pub exception_class: _Unwind_Exception_Class,

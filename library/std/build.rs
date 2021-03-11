@@ -28,6 +28,10 @@ fn main() {
         || target.contains("asmjs")
     {
         // These platforms don't have any special requirements.
+    } else if target.contains("esp32") {
+        println!(r#"cargo:rustc-cfg=target_device="esp32""#);
+    } else if target.contains("esp8266") {
+        println!(r#"cargo:rustc-cfg=target_device="esp8266""#);
     } else {
         // This is for Cargo's build-std support, to mark std as unstable for
         // typically no_std platforms.

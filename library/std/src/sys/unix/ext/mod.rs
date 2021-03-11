@@ -33,6 +33,7 @@ pub mod ffi;
 pub mod fs;
 pub mod io;
 pub mod net;
+#[cfg(not(target_os = "freertos"))]
 pub mod process;
 pub mod raw;
 pub mod thread;
@@ -69,6 +70,7 @@ pub mod prelude {
     #[doc(no_inline)]
     #[stable(feature = "rust1", since = "1.0.0")]
     pub use super::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+    #[cfg(not(target_os = "freertos"))]
     #[doc(no_inline)]
     #[stable(feature = "rust1", since = "1.0.0")]
     pub use super::process::{CommandExt, ExitStatusExt};

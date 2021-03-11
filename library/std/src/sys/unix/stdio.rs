@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use crate::io::{self, IoSlice, IoSliceMut};
 use crate::mem::ManuallyDrop;
 use crate::sys::fd::FileDesc;
@@ -17,10 +19,12 @@ impl io::Read for Stdin {
         ManuallyDrop::new(FileDesc::new(libc::STDIN_FILENO)).read(buf)
     }
 
+    #[cfg(not(all(target_os = "freertos", target_arch = "xtensa")))]
     fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> io::Result<usize> {
         ManuallyDrop::new(FileDesc::new(libc::STDIN_FILENO)).read_vectored(bufs)
     }
 
+    #[cfg(not(all(target_os = "freertos", target_arch = "xtensa")))]
     #[inline]
     fn is_read_vectored(&self) -> bool {
         true
@@ -38,10 +42,12 @@ impl io::Write for Stdout {
         ManuallyDrop::new(FileDesc::new(libc::STDOUT_FILENO)).write(buf)
     }
 
+    #[cfg(not(all(target_os = "freertos", target_arch = "xtensa")))]
     fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
         ManuallyDrop::new(FileDesc::new(libc::STDOUT_FILENO)).write_vectored(bufs)
     }
 
+    #[cfg(not(all(target_os = "freertos", target_arch = "xtensa")))]
     #[inline]
     fn is_write_vectored(&self) -> bool {
         true
@@ -63,10 +69,12 @@ impl io::Write for Stderr {
         ManuallyDrop::new(FileDesc::new(libc::STDERR_FILENO)).write(buf)
     }
 
+    #[cfg(not(all(target_os = "freertos", target_arch = "xtensa")))]
     fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
         ManuallyDrop::new(FileDesc::new(libc::STDERR_FILENO)).write_vectored(bufs)
     }
 
+    #[cfg(not(all(target_os = "freertos", target_arch = "xtensa")))]
     #[inline]
     fn is_write_vectored(&self) -> bool {
         true

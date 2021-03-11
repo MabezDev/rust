@@ -295,7 +295,31 @@ impl FileAttr {
     }
 }
 
-#[cfg(not(target_os = "netbsd"))]
+#[cfg(target_env = "newlib")]
+impl FileAttr {
+    pub fn modified(&self) -> io::Result<SystemTime> {
+        Ok(SystemTime::from(libc::timespec {
+            tv_sec: self.stat.st_mtime as libc::time_t,
+            tv_nsec: 0,
+        }))
+    }
+
+    pub fn accessed(&self) -> io::Result<SystemTime> {
+        Ok(SystemTime::from(libc::timespec {
+            tv_sec: self.stat.st_atime as libc::time_t,
+            tv_nsec: 0,
+        }))
+    }
+
+    pub fn created(&self) -> io::Result<SystemTime> {
+        Ok(SystemTime::from(libc::timespec {
+            tv_sec: self.stat.st_ctime as libc::time_t,
+            tv_nsec: 0,
+        }))
+    }
+}
+
+#[cfg(not(any(target_os = "netbsd", target_env = "newlib")))]
 impl FileAttr {
     #[cfg(not(target_os = "vxworks"))]
     pub fn modified(&self) -> io::Result<SystemTime> {
@@ -583,6 +607,7 @@ impl DirEntry {
     }
 
     #[cfg(any(
+        target_env = "newlib",
         target_os = "macos",
         target_os = "ios",
         target_os = "linux",
@@ -628,6 +653,7 @@ impl DirEntry {
         }
     }
     #[cfg(any(
+        target_env = "newlib",
         target_os = "android",
         target_os = "linux",
         target_os = "emscripten",
@@ -1082,8 +1108,8 @@ pub fn link(original: &Path, link: &Path) -> io::Result<()> {
     let original = cstr(original)?;
     let link = cstr(link)?;
     cfg_if::cfg_if! {
-        if #[cfg(any(target_os = "vxworks", target_os = "redox", target_os = "android"))] {
-            // VxWorks, Redox, and old versions of Android lack `linkat`, so use
+        if #[cfg(any(target_env = "newlib", target_os = "vxworks", target_os = "redox", target_os = "android"))] {
+            // Newlib, VxWorks, Redox, and old versions of Android lack `linkat`, so use
             // `link` instead. POSIX leaves it implementation-defined whether
             // `link` follows symlinks, so rely on the `symlink_hard_link` test
             // in library/std/src/fs/tests.rs to check the behavior.
